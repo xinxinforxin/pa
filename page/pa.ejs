@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--inline[../../common/page/head.ejs]-->
+        <title>测试</title>
+        <link rel="stylesheet" type="text/css" href="../static/index.css?__inline">
+    </head>
+    <body>
+		<script>
+		</script>
+        <header>
+            <ul>
+                <li <% if(locals.invest_status == '0') { %> class="active" <% } %> ><a href="#" id="go_noreturn"  class="border-r"> 即将回款 <% if(locals.invest_status == '0') { %> <span>( <%=locals.invest_total%> ) </span> <% } %></a></li>
+                <li <% if(locals.invest_status == '11') { %> class="active li-right" <% } else{ %> class="li-right" <%} %> ><a href="#" id="go_return">已回款  <% if(locals.invest_status == '11') { %> <span>( <%= locals.invest_total %> ) </span> <% } %></a></li>
+            </ul>
+        </header>
+        <section class="no-return">
+        <% if(locals.invest_status == '0'){
+            for(var i=0; i<locals.invest_record.length; i++) {
+        %>  
+         <div class="item-block">
+                <div class="title">
+                    <h5>国宝计划<%=locals.invest_record[i].productNo%>期</h5><a href="#">查看合同> </a>
+                </div>
+                <div class="row item-content">
+                    <div class="col-xs-5">
+                        <span class="nums"><%=locals.invest_record[i].amount%></span>
+                        <span>已投金额(元)</span>
+                    </div>
+                    <div class="col-xs-3">
+                        <span class="nums"><%=locals.invest_record[i].curRate%></span>
+                        <span>年化利率</span>
+                    </div>
+                    <div class="col-xs-4">
+                        <span class="nums"><%=locals.invest_record[i].profit%></span>
+                        <span>收益(元)</span>
+                    </div>
+                </div>
+                <div  class="item-time">
+                    <div class="time-full">
+                        <span>到期时间:<span class="date-full"><%=locals.invest_record[i].repayTime%></span></span>
+                    </div>
+                    <div class="time-day">
+                        <span>还剩: <%=locals.invest_record[i].distance%> 天</span>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+        <p class="text-center">已经到底了，一共<%= locals.invest_total %>条记录。</p>
+        <% }  
+        else if(locals.invest_status == '11'){
+            for(var i=0; i<locals.invest_record.length; i++) { %>
+
+            <div class="item-block">
+                <div class="title">
+                    <h5>国宝计划<%=locals.invest_record[i].productNo%>期</h5><a href="#">查看合同> </a>
+                </div>
+                <div class="row item-content">
+                    <div class="col-xs-5">
+                        <span class="nums"><%=locals.invest_record[i].amount%></span>
+                        <span >已投金额(元)</span>
+                    </div>
+                    <div class="col-xs-3">
+                        <span class="nums"><%=locals.invest_record[i].curRate%></span>
+                        <span>年化利率</span>
+                    </div>
+                    <div class="col-xs-4">
+                        <span class="nums"><%=locals.invest_record[i].profit%></span>
+                        <span>收益(元)</span>
+                    </div>
+                </div>
+                <div  class="item-time">
+                    <div class="time-full">
+                        <span>到期时间:<span class="date-full"><%=locals.invest_record[i].repayTime%></span></span>
+                    </div>
+                </div>
+                
+            </div>
+            <%}if(locals.invest_total > 5*(locals.invest_pageIndex+1)){ %>
+            <p id='pageButton' class="text-center"  onclick="moreInfo(<%=locals.invest_pro_type%>,<%=locals.invest_total%>)" >点我加载更多</p>
+        <%  } else{ %>
+            <p id='pageButton' class="text-center" >已经到底了，一共 <%= locals.invest_total %> 条记录</p>
+        <%}}%>
+        </section>
+            <input type="hidden" id="index" value="0"></input>
+        <p id="errorMessage" class="text-center"></p>
+        <p id="tip" class="text-center"></p>
+        <!--inline[../../common/page/foot.ejs]-->
+        <script>
+            var data = <%- locals.invest_total %>;
+            var length = <%- locals.invest_record.length%>;
+            $("#go_noreturn").attr("href","/invest/h5_detail/pa?status=0");
+            $("#go_return").attr("href","/invest/h5_detail/pa?status=11");
+
+            function moreInfo (pro_type,total) {
+                //页码计算
+                var pageIndex = parseInt($("#index").val());
+                pageIndex = pageIndex + 1;
+                $("#index").val(pageIndex);
+                $.ajax({
+                    type: 'GET',
+                    url: '/invest/pa/record/',
+                    data:
+                    {
+                        status: 11,
+                        pageIndex:pageIndex,
+                        limit:5,
+                        pro_type:pro_type
+                    },
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    success: function(data){
+                        if(total < 5*(pageIndex+1)){
+                            $('#pageButton').html('<p class="text-center">已经到底了，一共'+<%- locals.invest_total %>+'条记录。</p>');
+                        }
+                        for(var i = 0;i<data.value.length;i++){
+                            //在原来的投资列表中动态增加
+                            $("#no-return").last().append(
+                                "<div class='item-block'><div class='title'><h5>国宝计划"+data.value[i].productNo+"期</h5><a href='#'>查看合同></a></div><div class='row item-content'><div class='col-xs-5'><span class='nums'>"+data.value[i].amount+"</span><span>已投金额(元)</span></div><div class='col-xs-3'><span class='nums'>"+data.value[i].curRate+"</span><span>年化利率</span></div><div class='col-xs-4'><span class='nums'>"+data.value[i].profit+"</span><span>收益(元)</span></div></div><div  class='item-time'><div class='time-full'><span>到期时间:<span class='date-full'>"+data.value[i].repayTime+"</span></span></div></div></div>");
+                        }
+                    },
+                    error: function(xhr, type){
+                        $('#errorMessage').text("数据获取失败，请稍候重试");
+                    }
+                });
+            }
+
+        </script>
+    </body>
+</html>
